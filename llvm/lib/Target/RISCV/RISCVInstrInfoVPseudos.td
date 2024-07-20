@@ -591,6 +591,41 @@ def RISCVMaskedPseudosTable : GenericTable {
   let PrimaryKeyName = "getMaskedPseudoInfo";
 }
 
+class VXtoVV<string name> {
+    string ret = !cond(!ne(!find(name, "_VX"), -1) :
+                         !subst("_VX", "_VV", name),
+                       !ne(!find(name, "_WX"), -1) :
+                         !subst("_WX", "_WV", name),
+                       !ne(!find(name, "_VFPR64"), -1) :
+                         !subst("_VFPR64", "_VV", name),
+                       !ne(!find(name, "_VFPR32"), -1) :
+                         !subst("_VFPR32", "_VV", name),
+                       !ne(!find(name, "_VFPR16"), -1) :
+                         !subst("_VFPR16", "_VV", name),
+                       !ne(!find(name, "_WFPR64"), -1) :
+                         !subst("_WFPR64", "_WV", name),
+                       !ne(!find(name, "_WFPR32"), -1) :
+                         !subst("_WFPR32", "_WV", name),
+                       !ne(!find(name, "_WFPR16"), -1) :
+                         !subst("_WFPR16", "_WV", name),
+                       true: name);
+}
+
+class RISCVVXPseudo {
+  Pseudo VXPseudo = !cast<Pseudo>(NAME);
+  Pseudo VVPseudo = !if(!exists<Pseudo>(VXtoVV<NAME>.ret),
+                        !cast<Pseudo>(VXtoVV<NAME>.ret),
+                        VXPseudo);
+}
+
+def RISCVVXPseudosTable : GenericTable {
+  let FilterClass = "RISCVVXPseudo";
+  let CppTypeName = "RISCVVXPseudoInfo";
+  let Fields = ["VXPseudo", "VVPseudo"];
+  let PrimaryKey = ["VXPseudo"];
+  let PrimaryKeyName = "getVXPseudoInfo";
+}
+
 class RISCVVLE<bit M, bit Str, bit F, bits<3> S, bits<3> L> {
   bits<1> Masked = M;
   bits<1> Strided = Str;
@@ -2220,7 +2255,8 @@ multiclass VPseudoVGTR_EI16_VV {
 }
 
 multiclass VPseudoBinaryV_VX<LMULInfo m, string Constraint = "", int sew = 0> {
-  defm "_VX" : VPseudoBinary<m.vrclass, m.vrclass, GPR, m, Constraint, sew>;
+  defm "_VX" : VPseudoBinary<m.vrclass, m.vrclass, GPR, m, Constraint, sew>
+               , RISCVVXPseudo;
 }
 
 multiclass VPseudoBinaryV_VX_RM<LMULInfo m, string Constraint = ""> {
@@ -2243,7 +2279,8 @@ multiclass VPseudoBinaryV_VF<LMULInfo m, FPR_Info f, int sew> {
 multiclass VPseudoBinaryV_VF_RM<LMULInfo m, FPR_Info f, int sew> {
   defm "_V" # f.FX : VPseudoBinaryRoundingMode<m.vrclass, m.vrclass,
                                                f.fprclass, m, "", sew,
-                                               UsesVXRM=0>;
+                                               UsesVXRM=0>
+                     , RISCVVXPseudo;
 }
 
 multiclass VPseudoVSLD1_VF<string Constraint = ""> {
@@ -2329,7 +2366,8 @@ multiclass VPseudoBinaryW_WV_RM<LMULInfo m, int sew> {
 }
 
 multiclass VPseudoBinaryW_WX<LMULInfo m> {
-  defm "_WX" : VPseudoBinary<m.wvrclass, m.wvrclass, GPR, m, /*Constraint*/ "", TargetConstraintType=3>;
+  defm "_WX" : VPseudoBinary<m.wvrclass, m.wvrclass, GPR, m, /*Constraint*/ "", TargetConstraintType=3>
+                             , RISCVVXPseudo;
 }
 
 multiclass VPseudoBinaryW_WF_RM<LMULInfo m, FPR_Info f, int sew> {
@@ -2338,7 +2376,8 @@ multiclass VPseudoBinaryW_WF_RM<LMULInfo m, FPR_Info f, int sew> {
                                                Constraint="",
                                                sew=sew,
                                                UsesVXRM=0,
-                                               TargetConstraintType=3>;
+                                               TargetConstraintType=3>
+                                               , RISCVVXPseudo;
 }
 
 // Narrowing instructions like vnsrl/vnsra/vnclip(u) don't need @earlyclobber
@@ -3221,14 +3260,16 @@ multiclass VPseudoTernaryV_VV_AAXA_RM<LMULInfo m, int sew> {
 
 multiclass VPseudoTernaryV_VX_AAXA<LMULInfo m> {
   defm "_VX" : VPseudoTernaryWithPolicy<m.vrclass, GPR, m.vrclass, m,
-                                        Commutable=1>;
+                                        Commutable=1>
+                                        , RISCVVXPseudo;
 }
 
 multiclass VPseudoTernaryV_VF_AAXA_RM<LMULInfo m, FPR_Info f,
                                       int sew> {
   defm "_V" # f.FX : VPseudoTernaryWithPolicyRoundingMode<m.vrclass, f.fprclass,
                                                           m.vrclass, m,
-                                                          sew=sew, Commutable=1>;
+                                                          sew=sew, Commutable=1>
+                                                          , RISCVVXPseudo;
 }
 
 multiclass VPseudoTernaryW_VV<LMULInfo m, bit Commutable = 0> {

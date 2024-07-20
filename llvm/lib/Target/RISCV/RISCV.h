@@ -25,6 +25,10 @@ class RISCVRegisterBankInfo;
 class RISCVSubtarget;
 class RISCVTargetMachine;
 
+FunctionPass *createRISCVExpandVXPseudoPass();
+void initializeRISCVExpandVXPseudoPass(PassRegistry &);
+extern char &RISCVExpandVXPseudoID;
+
 FunctionPass *createRISCVCodeGenPreparePass();
 void initializeRISCVCodeGenPreparePass(PassRegistry &);
 
