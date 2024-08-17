@@ -305,7 +305,7 @@ multiclass RVVOp0BuiltinSet<string intrinsic_name, string type_range,
                             list<list<string>> suffixes_prototypes>
     : RVVBuiltinSet<intrinsic_name, type_range, suffixes_prototypes, [0]>;
 
-// IntrinsicTypes is output, op1 [-1, 0]
+// IntrinsicTypes is output, op0 [-1, 0]
 multiclass RVVOutOp0BuiltinSet<string intrinsic_name, string type_range,
                                list<list<string>> suffixes_prototypes>
     : RVVBuiltinSet<intrinsic_name, type_range, suffixes_prototypes, [-1, 0]>;
