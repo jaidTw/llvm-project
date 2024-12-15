@@ -225,7 +225,7 @@ RISCVExpandVXPseudo::calcMICost(const MachineInstr &MI) {
 
     const int *PS = TRI->getRegClassPressureSets(RC);
     for (; *PS != -1; ++PS)
-      Cost[*PS] = Cost.getOrInsertDefault(*PS) + W.RegWeight * RegAccFactor;
+      Cost[*PS] += W.RegWeight * RegAccFactor;
   }
   return Cost;
 }
@@ -347,7 +347,7 @@ bool RISCVExpandVXPseudo::isHoistable(
 
   // Do after the recursive call so we can see defs before kills
   for (auto [Class, Cost] : calcMICost(*MI))
-    DeltaPressure[Class] = DeltaPressure.getOrInsertDefault(Class) + Cost;
+    DeltaPressure[Class] += Cost;
 
   return IsHoistable;
 }
